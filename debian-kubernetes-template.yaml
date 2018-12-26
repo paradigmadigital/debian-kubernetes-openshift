@@ -1,0 +1,233 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: debian-kubernetes
+message: 'Debian Template.
+  "oc get svc" will return something like:
+
+  $ oc get svc
+  NAME        CLUSTER-IP     EXTERNAL-IP                   PORT(S)        AGE
+  debian-kubernetes      172.20.8.253   10.240.71.148,10.240.71.148   22:30004/TCP   4s
+
+  You can run "ssh -p 30004 debian@10.240.71.148" to get a shell.'
+metadata:
+  annotations:
+    description: Debian Kubernetes Instance
+    openshift.io/display-name: Debian Kubernetes Instance
+    openshift.io/provider-display-name: Paradigma Digital
+    tags: debian,kubernetes,VirtualMachineInstance,virtual,machine,instance
+  name: debian-kubernetes
+  imageUrl: https://cdn.pbrd.co/images/H5Gutd7.png
+objects:
+- apiVersion: kubevirt.io/v1alpha2
+  kind: VirtualMachineInstance
+  metadata:
+    name: "${VM_NAME}"
+    labels:
+      expose: debian-kubernetes
+  spec:
+    terminationGracePeriodSeconds: 30
+    hostname: "${VM_NAME}"
+    subdomain: "paradigma"
+    domain:
+      resources:
+        requests:
+          memory: "${MEMORY_LIMIT}"
+      devices:
+        disks:
+        - name: registrydisk
+          volumeName: registryvolume
+          disk:
+            bus: virtio
+        - name: emptydisk
+          volumeName: emptydiskvolume
+          disk:
+            bus: virtio
+        - disk:
+            bus: virtio
+          name: cloudinitdisk
+          volumeName: cloudinitvolume
+  #      - disk:
+  #          bus: virtio
+  #        name: mypvc
+  #        volumeName: cloudinitvolume
+        interfaces:
+          - name: default
+            bridge: {}
+    networks:
+      - name: default
+        pod: {}
+    volumes:
+    - name: registryvolume
+      registryDisk:
+        image: docker-registry.default.svc:5000/openshift/debian-kubernetes
+    - name: emptydiskvolume
+      emptyDisk:
+        capacity: "5Gi"
+    - name: cloudinitvolume
+      cloudInitNoCloud:
+#        userDataBase64: IyEvYmluL2Jhc2gKZWNobyAiaG9sYSBob2xpdGEgdmVjaW5pdG8iCmVjaG8gImhvbGEgaG9saXRhIHZlY2luaXRvIiA+IC90bXAvcHJ1ZWJhZGVxdWV2YS50eHQKCnVzZXJtb2QgLXAgJChlY2hvIGRlYmlhbiB8IG9wZW5zc2wgcGFzc3dkIC0xIC1zdGRpbikgZGViaWFuCgphcHQtZ2V0IHVwZGF0ZQphcHQtZ2V0IC15IGluc3RhbGwgcHl0aG9uLXBpcAoKYXB0LWdldCAteSBpbnN0YWxsIGdpdApnaXQgY2xvbmUgaHR0cHM6Ly9naXRodWIuY29tL2t1YmVybmV0ZXMtc2lncy9rdWJlc3ByYXkKY2Qga3ViZXNwcmF5LwpnaXQgY2hlY2tvdXQgdGFncy92Mi44LjAKCmFwdC1nZXQgLXkgaW5zdGFsbCBweXRob24tcGlwCnBpcCBpbnN0YWxsIGFuc2libGU7cGlwIGluc3RhbGwgLXIgcmVxdWlyZW1lbnRzLnR4dApjcCAtcmZwIGludmVudG9yeS9zYW1wbGUgaW52ZW50b3J5L215Y2x1c3RlcgoKSVBfREVGQVVMVF9HVz0oYGhvc3RuYW1lIC1JIHwgYXdrICd7cHJpbnQgJDF9J2ApCmRlY2xhcmUgLWEgSVBTPSgke0lQX0RFRkFVTFRfR1d9KQpDT05GSUdfRklMRT1pbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaSBweXRob24zIGNvbnRyaWIvaW52ZW50b3J5X2J1aWxkZXIvaW52ZW50b3J5LnB5ICR7SVBTW0BdfQpzZWQgLWkgJ3MvXFthbGxcXS9cW2FsbFw6dmFyc1xdXG5hbnNpYmxlX2Nvbm5lY3Rpb249bG9jYWxcblxbYWxsXF0vJyBpbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaQpzZWQgLWkgJ3Mvbm9kZTEvZGViaWFuLWt1YmVybmV0ZXMtNjQ0My9nJyBpbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaQplY2hvICdbYWxsOnZhcnNdJyA+PiBpbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaQplY2hvICdhbnNpYmxlX2Nvbm5lY3Rpb249bG9jYWwnID4+IGludmVudG9yeS9teWNsdXN0ZXIvaG9zdHMuaW5pCnNsZWVwIDJtCmJhc2ggLWMgJ2Fuc2libGUtcGxheWJvb2sgLWkgaW52ZW50b3J5L215Y2x1c3Rlci9ob3N0cy5pbmkgLS1iZWNvbWUgLS1iZWNvbWUtdXNlcj1yb290IGNsdXN0ZXIueW1sJwoKc2xlZXAgMm0KCmNhdCA8PEVPRiA+IGFkbWluLXVzZXItc2VydmljZS1hY2NvdW50LnlhbWwKYXBpVmVyc2lvbjogdjEKa2luZDogU2VydmljZUFjY291bnQKbWV0YWRhdGE6CiAgbmFtZTogYWRtaW4tdXNlcgogIG5hbWVzcGFjZToga3ViZS1zeXN0ZW0KRU9GCmt1YmVjdGwgLS1rdWJlY29uZmlnPScvcm9vdC8ua3ViZS9jb25maWcnIGNyZWF0ZSAtZiBhZG1pbi11c2VyLXNlcnZpY2UtYWNjb3VudC55YW1sCnNsZWVwIDVzCgpjYXQgPDxFT0YgPiBhZG1pbi11c2VyLWNsdXN0ZXItcm9sZS1iaW5kaW5nLnlhbWwKYXBpVmVyc2lvbjogcmJhYy5hdXRob3JpemF0aW9uLms4cy5pby92MQpraW5kOiBDbHVzdGVyUm9sZUJpbmRpbmcKbWV0YWRhdGE6CiAgbmFtZTogYWRtaW4tdXNlcgpyb2xlUmVmOgogIGFwaUdyb3VwOiByYmFjLmF1dGhvcml6YXRpb24uazhzLmlvCiAga2luZDogQ2x1c3RlclJvbGUKICBuYW1lOiBjbHVzdGVyLWFkbWluCnN1YmplY3RzOgotIGtpbmQ6IFNlcnZpY2VBY2NvdW50CiAgbmFtZTogYWRtaW4tdXNlcgogIG5hbWVzcGFjZToga3ViZS1zeXN0ZW0KRU9GCmt1YmVjdGwgLS1rdWJlY29uZmlnPScvcm9vdC8ua3ViZS9jb25maWcnIGNyZWF0ZSAtZiBhZG1pbi11c2VyLWNsdXN0ZXItcm9sZS1iaW5kaW5nLnlhbWwKc2xlZXAgNXMKa3ViZWN0bCAtLWt1YmVjb25maWc9Jy9yb290Ly5rdWJlL2NvbmZpZycgYXBwbHkgLWYgaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2t1YmVybmV0ZXMvZGFzaGJvYXJkL21hc3Rlci9haW8vZGVwbG95L3JlY29tbWVuZGVkL2t1YmVybmV0ZXMtZGFzaGJvYXJkLnlhbWwKc2xlZXAgNXMKCiNrdWJlY3RsIC0ta3ViZWNvbmZpZz0nL3Jvb3QvLmt1YmUvY29uZmlnJyAtbiBrdWJlLXN5c3RlbSBkZXNjcmliZSBzZWNyZXQgJChrdWJlY3RsIC1uIGt1YmUtc3lzdGVtIGdldCBzZWNyZXQgfCBncmVwIGFkbWluLXVzZXIgfCBhd2sgJ3twcmludCAkMX0nKQoKIyMgSW5zdGFsYXIgaGVsbQp3Z2V0IGh0dHBzOi8vc3RvcmFnZS5nb29nbGVhcGlzLmNvbS9rdWJlcm5ldGVzLWhlbG0vaGVsbS12Mi4xMi4xLWxpbnV4LWFtZDY0LnRhci5negp0YXIgLXp4dmYgaGVsbS12Mi4xMi4xLWxpbnV4LWFtZDY0LnRhci5negptdiBsaW51eC1hbWQ2NC9oZWxtIC91c3IvbG9jYWwvYmluCm12IGxpbnV4LWFtZDY0L3RpbGxlciAvdXNyL2xvY2FsL2Jpbgoja3ViZWN0bCAtLWt1YmVjb25maWc9Jy9yb290Ly5rdWJlL2NvbmZpZycgY3JlYXRlIHNlcnZpY2VhY2NvdW50IC0tbmFtZXNwYWNlIGt1YmUtc3lzdGVtIHRpbGxlcgojc2xlZXAgNXMKI2t1YmVjdGwgLS1rdWJlY29uZmlnPScvcm9vdC8ua3ViZS9jb25maWcnIGNyZWF0ZSBjbHVzdGVycm9sZWJpbmRpbmcgdGlsbGVyLWNsdXN0ZXItcnVsZSAtLWNsdXN0ZXJyb2xlPWNsdXN0ZXItYWRtaW4gLS1zZXJ2aWNlYWNjb3VudD1rdWJlLXN5c3RlbTp0aWxsZXIKI3NsZWVwIDEwcwojaGVsbSBpbml0CiNzbGVlcCA1bQoKIyMgSW5zdGFsYXIgaW5ncmVzcwojaGVsbSAtLWt1YmVjb25maWc9Jy9yb290Ly5rdWJlL2NvbmZpZycgaW5zdGFsbCBzdGFibGUvbmdpbngtaW5ncmVzcyAtLW5hbWUgbXktbmdpbnggLS1zZXQgcmJhYy5jcmVhdGU9dHJ1ZQoKYmFzaCAtYyAnYW5zaWJsZS1wbGF5Ym9vayAtaSBpbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaSAtLWJlY29tZSAtLWJlY29tZS11c2VyPXJvb3QgY2x1c3Rlci55bWwnCiMjIEdldCBzZWNyZXQKa3ViZWN0bCAtLWt1YmVjb25maWc9Jy9yb290Ly5rdWJlL2NvbmZpZycgLW4ga3ViZS1zeXN0ZW0gZGVzY3JpYmUgc2VjcmV0ICQoa3ViZWN0bCAtbiBrdWJlLXN5c3RlbSBnZXQgc2VjcmV0IHwgZ3JlcCBhZG1pbi11c2VyIHwgYXdrICd7cHJpbnQgJDF9JykK
+        userData: |-
+          #cloud-config
+          password: debian
+          chpasswd: { expire: False }
+          package_update: true
+          packages: [python-pip, python-netaddr, git]
+          write_files:
+          - path: /root/admin-user-service-account.yaml
+            content: |
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: admin-user
+                namespace: kube-system
+          - path: /root/admin-user-cluster-role-binding.yaml
+            content: |
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: admin-user
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: admin-user
+                namespace: kube-system
+          - path: /root/kubespray-prepare.sh
+            content: |
+              #!/bin/bash
+              pip install ansible==2.6.11
+              git clone https://github.com/kubernetes-sigs/kubespray /root/kubespray
+              cd /root/kubespray && git checkout tags/v2.7.0
+              cp -rfp /root/kubespray/inventory/sample /root/kubespray/inventory/mycluster
+              cd /root/kubespray
+              #IP_DEFAULT_GW=(`hostname -I | awk '{print $1}'`)
+              #declare -a IPS=(${IP_DEFAULT_GW})
+              #CONFIG_FILE=inventory/mycluster/hosts.ini python3 contrib/inventory_builder/inventory.py ${IPS[@]}
+              #sed -i 's/\[all\]/\[all\:vars\]\nansible_connection=local\n\[all\]/' /root/kubespray/inventory/mycluster/hosts.ini
+              #sed -i 's/node1/debian-kubernetes-6443/g' /root/kubespray/inventory/mycluster/hosts.ini
+              cp /root/hosts.ini /root/kubespray/inventory/mycluster/hosts.ini
+              IP_DEFAULT_GW=`hostname -I | awk '{print $1}'`
+              sed -i "s/IP_DEFAULT_GW/${IP_DEFAULT_GW}/g" /root/kubespray/inventory/mycluster/hosts.ini
+              cd /root/kubespray && pip install -r requirements.txt
+          - path: /root/hosts.ini
+            content: |
+              [all:vars]
+              ansible_connection=local
+              [all]
+              debian-kubernetes-6443 	 ansible_host=IP_DEFAULT_GW ip=IP_DEFAULT_GW
+
+              [kube-master]
+              debian-kubernetes-6443
+
+              [etcd]
+              debian-kubernetes-6443
+
+              [kube-node]
+              debian-kubernetes-6443
+
+              [k8s-cluster:children]
+              kube-master
+              kube-node
+
+              [calico-rr]
+
+              [vault]
+              debian-kubernetes-6443
+          runcmd:
+          - bash /root/kubespray-prepare.sh
+          - ansible-playbook -i /root/kubespray/inventory/mycluster/hosts.ini /root/kubespray/cluster.yml
+  #  - name: mypvc
+  #    persistentVolumeClaim:
+  #      claimName: mypvc
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${VM_NAME}-22
+  spec:
+    selector:
+      expose: debian-kubernetes
+  #  clusterIP: None
+    ports:
+    - name: tcp-22 # Actually, no port is needed.
+      port: 22
+      protocol: TCP
+      targetPort: 22
+  #  type: ClusterIP
+    externalTrafficPolicy: Cluster
+    type: LoadBalancer
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${VM_NAME}-80
+  spec:
+    selector:
+      expose: debian-kubernetes
+    ports:
+    - name: http-80 # Actually, no port is needed.
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${VM_NAME}-6443
+  spec:
+    selector:
+      expose: debian-kubernetes
+    ports:
+    - name: http-443 # Actually, no port is needed.
+      port: 6443
+      protocol: TCP
+      targetPort: 6443
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${VM_NAME}-443
+  spec:
+    selector:
+      expose: debian-kubernetes
+    ports:
+    - name: http-443 # Actually, no port is needed.
+      port: 443
+      protocol: TCP
+      targetPort: 443
+    type: ClusterIP
+- apiVersion: v1
+  kind: Route
+  metadata:
+    labels:
+      app: debian-kubernetes
+      template: debian-kubernetes
+    name: debian-kubernetes-6443
+  spec:
+#    host: ${KUBERNETES_HOSTNAME}
+    port:
+      targetPort: http-443
+    tls:
+      termination: passthrough
+    to:
+      kind: Service
+      name: debian-kubernetes-6443
+      weight: 100
+    wildcardPolicy: None
+parameters:
+- description: Virtual Machine Name.
+  displayName: Virtual Machine Name
+  name: VM_NAME
+  required: true
+  value: debian-kubernetes
+- description: Container memory limit.
+  displayName: Container Memory Limit
+  name: MEMORY_LIMIT
+  value: 8196M
+- description: Kubernetes VM password
+  displayName: Kubernetes VM password
+  name: PASSWORD
+  value: debian
+#- description: Hostname for the application
+#  displayName: Hostname for the application
