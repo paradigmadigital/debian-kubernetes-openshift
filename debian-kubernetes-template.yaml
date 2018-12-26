@@ -17,7 +17,7 @@ metadata:
     openshift.io/provider-display-name: Paradigma Digital
     tags: debian,kubernetes,VirtualMachineInstance,virtual,machine,instance
   name: debian-kubernetes
-  imageUrl: https://cdn.pbrd.co/images/H5Gutd7.png
+  imageUrl: https://raw.githubusercontent.com/paradigmadigital/debian-kubernetes-openshift/master/kubernetes%2Bdebian.png
 objects:
 - apiVersion: kubevirt.io/v1alpha2
   kind: VirtualMachineInstance
