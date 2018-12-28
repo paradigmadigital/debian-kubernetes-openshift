@@ -235,7 +235,7 @@ objects:
     selector:
       expose: debian-kubernetes
     ports:
-    - name: http-443 # Actually, no port is needed.
+    - name: http-6443 # Actually, no port is needed.
       port: 6443
       protocol: TCP
       targetPort: 6443
