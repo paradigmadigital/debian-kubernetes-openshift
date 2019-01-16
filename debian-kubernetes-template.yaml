@@ -2,40 +2,38 @@ apiVersion: v1
 kind: Template
 labels:
   template: debian-kubernetes
-message: 'Debian Template.
-  "oc get svc" will return something like:
+message: |-
+  ¡¡CUIDADO!! Este Kubernetes __EFIMERO__ podrá ser formateado en cualquier
+  momento perdiendo todos los cambios realizados sobre él.
+  Si esto ocurre se levantará automáticamente otro vacío y te llegará un correo
+  con el nuevo token.
 
-  $ oc get svc
-  NAME        CLUSTER-IP     EXTERNAL-IP                   PORT(S)        AGE
-  debian-kubernetes      172.20.8.253   10.240.71.148,10.240.71.148   22:30004/TCP   4s
-
-  You can run "ssh debian@10.240.71.148" to get a shell.'
 metadata:
   annotations:
     description: Debian Kubernetes Instance
+    iconClass: icon-kubevirt
     openshift.io/display-name: Debian Kubernetes Instance (Ephemeral)
     openshift.io/provider-display-name: Paradigma Digital
     tags: debian,kubernetes,VirtualMachineInstance,virtual,machine,instance
-    iconClass: icon-kubevirt
   name: debian-kubernetes
 objects:
 - apiVersion: kubevirt.io/v1alpha2
   kind: VirtualMachineInstanceReplicaSet
   metadata:
-    name: debian-kubernetes-replicaset
+    name: ${VM_NAME}-replicaset
   spec:
     replicas: 1
     selector:
       matchLabels:
-        expose: debian-kubernetes
+        expose: ${VM_NAME}
     template:
       metadata:
-        name: debian-kubernetes-6443
         labels:
-          expose: debian-kubernetes
+          expose: ${VM_NAME}
+        name: ${VM_NAME}-6443
       spec:
         terminationGracePeriodSeconds: 30
-        hostname: "debian-kubernetes-6443"
+        hostname: "${VM_NAME}-6443"
         subdomain: "paradigma"
         domain:
           cpu:
@@ -76,7 +74,6 @@ objects:
             capacity: "5Gi"
         - name: cloudinitvolume
           cloudInitNoCloud:
-      #        userDataBase64: IyEvYmluL2Jhc2gKZWNobyAiaG9sYSBob2xpdGEgdmVjaW5pdG8iCmVjaG8gImhvbGEgaG9saXRhIHZlY2luaXRvIiA+IC90bXAvcHJ1ZWJhZGVxdWV2YS50eHQKCnVzZXJtb2QgLXAgJChlY2hvIGRlYmlhbiB8IG9wZW5zc2wgcGFzc3dkIC0xIC1zdGRpbikgZGViaWFuCgphcHQtZ2V0IHVwZGF0ZQphcHQtZ2V0IC15IGluc3RhbGwgcHl0aG9uLXBpcAoKYXB0LWdldCAteSBpbnN0YWxsIGdpdApnaXQgY2xvbmUgaHR0cHM6Ly9naXRodWIuY29tL2t1YmVybmV0ZXMtc2lncy9rdWJlc3ByYXkKY2Qga3ViZXNwcmF5LwpnaXQgY2hlY2tvdXQgdGFncy92Mi44LjAKCmFwdC1nZXQgLXkgaW5zdGFsbCBweXRob24tcGlwCnBpcCBpbnN0YWxsIGFuc2libGU7cGlwIGluc3RhbGwgLXIgcmVxdWlyZW1lbnRzLnR4dApjcCAtcmZwIGludmVudG9yeS9zYW1wbGUgaW52ZW50b3J5L215Y2x1c3RlcgoKSVBfREVGQVVMVF9HVz0oYGhvc3RuYW1lIC1JIHwgYXdrICd7cHJpbnQgJDF9J2ApCmRlY2xhcmUgLWEgSVBTPSgke0lQX0RFRkFVTFRfR1d9KQpDT05GSUdfRklMRT1pbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaSBweXRob24zIGNvbnRyaWIvaW52ZW50b3J5X2J1aWxkZXIvaW52ZW50b3J5LnB5ICR7SVBTW0BdfQpzZWQgLWkgJ3MvXFthbGxcXS9cW2FsbFw6dmFyc1xdXG5hbnNpYmxlX2Nvbm5lY3Rpb249bG9jYWxcblxbYWxsXF0vJyBpbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaQpzZWQgLWkgJ3Mvbm9kZTEvZGViaWFuLWt1YmVybmV0ZXMtNjQ0My9nJyBpbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaQplY2hvICdbYWxsOnZhcnNdJyA+PiBpbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaQplY2hvICdhbnNpYmxlX2Nvbm5lY3Rpb249bG9jYWwnID4+IGludmVudG9yeS9teWNsdXN0ZXIvaG9zdHMuaW5pCnNsZWVwIDJtCmJhc2ggLWMgJ2Fuc2libGUtcGxheWJvb2sgLWkgaW52ZW50b3J5L215Y2x1c3Rlci9ob3N0cy5pbmkgLS1iZWNvbWUgLS1iZWNvbWUtdXNlcj1yb290IGNsdXN0ZXIueW1sJwoKc2xlZXAgMm0KCmNhdCA8PEVPRiA+IGFkbWluLXVzZXItc2VydmljZS1hY2NvdW50LnlhbWwKYXBpVmVyc2lvbjogdjEKa2luZDogU2VydmljZUFjY291bnQKbWV0YWRhdGE6CiAgbmFtZTogYWRtaW4tdXNlcgogIG5hbWVzcGFjZToga3ViZS1zeXN0ZW0KRU9GCmt1YmVjdGwgLS1rdWJlY29uZmlnPScvcm9vdC8ua3ViZS9jb25maWcnIGNyZWF0ZSAtZiBhZG1pbi11c2VyLXNlcnZpY2UtYWNjb3VudC55YW1sCnNsZWVwIDVzCgpjYXQgPDxFT0YgPiBhZG1pbi11c2VyLWNsdXN0ZXItcm9sZS1iaW5kaW5nLnlhbWwKYXBpVmVyc2lvbjogcmJhYy5hdXRob3JpemF0aW9uLms4cy5pby92MQpraW5kOiBDbHVzdGVyUm9sZUJpbmRpbmcKbWV0YWRhdGE6CiAgbmFtZTogYWRtaW4tdXNlcgpyb2xlUmVmOgogIGFwaUdyb3VwOiByYmFjLmF1dGhvcml6YXRpb24uazhzLmlvCiAga2luZDogQ2x1c3RlclJvbGUKICBuYW1lOiBjbHVzdGVyLWFkbWluCnN1YmplY3RzOgotIGtpbmQ6IFNlcnZpY2VBY2NvdW50CiAgbmFtZTogYWRtaW4tdXNlcgogIG5hbWVzcGFjZToga3ViZS1zeXN0ZW0KRU9GCmt1YmVjdGwgLS1rdWJlY29uZmlnPScvcm9vdC8ua3ViZS9jb25maWcnIGNyZWF0ZSAtZiBhZG1pbi11c2VyLWNsdXN0ZXItcm9sZS1iaW5kaW5nLnlhbWwKc2xlZXAgNXMKa3ViZWN0bCAtLWt1YmVjb25maWc9Jy9yb290Ly5rdWJlL2NvbmZpZycgYXBwbHkgLWYgaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2t1YmVybmV0ZXMvZGFzaGJvYXJkL21hc3Rlci9haW8vZGVwbG95L3JlY29tbWVuZGVkL2t1YmVybmV0ZXMtZGFzaGJvYXJkLnlhbWwKc2xlZXAgNXMKCiNrdWJlY3RsIC0ta3ViZWNvbmZpZz0nL3Jvb3QvLmt1YmUvY29uZmlnJyAtbiBrdWJlLXN5c3RlbSBkZXNjcmliZSBzZWNyZXQgJChrdWJlY3RsIC1uIGt1YmUtc3lzdGVtIGdldCBzZWNyZXQgfCBncmVwIGFkbWluLXVzZXIgfCBhd2sgJ3twcmludCAkMX0nKQoKIyMgSW5zdGFsYXIgaGVsbQp3Z2V0IGh0dHBzOi8vc3RvcmFnZS5nb29nbGVhcGlzLmNvbS9rdWJlcm5ldGVzLWhlbG0vaGVsbS12Mi4xMi4xLWxpbnV4LWFtZDY0LnRhci5negp0YXIgLXp4dmYgaGVsbS12Mi4xMi4xLWxpbnV4LWFtZDY0LnRhci5negptdiBsaW51eC1hbWQ2NC9oZWxtIC91c3IvbG9jYWwvYmluCm12IGxpbnV4LWFtZDY0L3RpbGxlciAvdXNyL2xvY2FsL2Jpbgoja3ViZWN0bCAtLWt1YmVjb25maWc9Jy9yb290Ly5rdWJlL2NvbmZpZycgY3JlYXRlIHNlcnZpY2VhY2NvdW50IC0tbmFtZXNwYWNlIGt1YmUtc3lzdGVtIHRpbGxlcgojc2xlZXAgNXMKI2t1YmVjdGwgLS1rdWJlY29uZmlnPScvcm9vdC8ua3ViZS9jb25maWcnIGNyZWF0ZSBjbHVzdGVycm9sZWJpbmRpbmcgdGlsbGVyLWNsdXN0ZXItcnVsZSAtLWNsdXN0ZXJyb2xlPWNsdXN0ZXItYWRtaW4gLS1zZXJ2aWNlYWNjb3VudD1rdWJlLXN5c3RlbTp0aWxsZXIKI3NsZWVwIDEwcwojaGVsbSBpbml0CiNzbGVlcCA1bQoKIyMgSW5zdGFsYXIgaW5ncmVzcwojaGVsbSAtLWt1YmVjb25maWc9Jy9yb290Ly5rdWJlL2NvbmZpZycgaW5zdGFsbCBzdGFibGUvbmdpbngtaW5ncmVzcyAtLW5hbWUgbXktbmdpbnggLS1zZXQgcmJhYy5jcmVhdGU9dHJ1ZQoKYmFzaCAtYyAnYW5zaWJsZS1wbGF5Ym9vayAtaSBpbnZlbnRvcnkvbXljbHVzdGVyL2hvc3RzLmluaSAtLWJlY29tZSAtLWJlY29tZS11c2VyPXJvb3QgY2x1c3Rlci55bWwnCiMjIEdldCBzZWNyZXQKa3ViZWN0bCAtLWt1YmVjb25maWc9Jy9yb290Ly5rdWJlL2NvbmZpZycgLW4ga3ViZS1zeXN0ZW0gZGVzY3JpYmUgc2VjcmV0ICQoa3ViZWN0bCAtbiBrdWJlLXN5c3RlbSBnZXQgc2VjcmV0IHwgZ3JlcCBhZG1pbi11c2VyIHwgYXdrICd7cHJpbnQgJDF9JykK
             userData: |
               #cloud-config
               password: ${PASSWORD}
@@ -84,45 +81,44 @@ objects:
               package_update: true
               packages: [python-pip, python-netaddr, git, postfix, mutt]
               write_files:
-              - path: /root/admin-user-service-account.yaml
-                content: |
-                  apiVersion: v1
-                  kind: ServiceAccount
-                  metadata:
-                    name: admin-user
-                    namespace: kube-system
-              - path: /root/admin-user-cluster-role-binding.yaml
-                content: |
-                  apiVersion: rbac.authorization.k8s.io/v1
-                  kind: ClusterRoleBinding
-                  metadata:
-                    name: admin-user
-                  roleRef:
-                    apiGroup: rbac.authorization.k8s.io
-                    kind: ClusterRole
-                    name: cluster-admin
-                  subjects:
-                  - kind: ServiceAccount
-                    name: admin-user
-                    namespace: kube-system
               - path: /root/kubespray-deploy.sh
                 content: |
                   #!/bin/bash
+                  # Prepare kubespray environment
                   pip install ansible==2.7.5
                   git clone https://github.com/kubernetes-sigs/kubespray /root/kubespray
                   cd /root/kubespray && git checkout tags/v2.7.0
                   cp -rfp /root/kubespray/inventory/sample /root/kubespray/inventory/mycluster
                   cd /root/kubespray
-                  #IP_DEFAULT_GW=(`hostname -I | awk '{print $1}'`)
-                  #declare -a IPS=(${IP_DEFAULT_GW})
-                  #CONFIG_FILE=inventory/mycluster/hosts.ini python3 contrib/inventory_builder/inventory.py ${IPS[@]}
-                  #sed -i 's/\[all\]/\[all\:vars\]\nansible_connection=local\n\[all\]/' /root/kubespray/inventory/mycluster/hosts.ini
-                  #sed -i 's/node1/debian-kubernetes-6443/g' /root/kubespray/inventory/mycluster/hosts.ini
                   cp /root/hosts.ini /root/kubespray/inventory/mycluster/hosts.ini
                   IP_DEFAULT_GW=`hostname -I | awk '{print $1}'`
                   sed -i "s/IP_DEFAULT_GW/${IP_DEFAULT_GW}/g" /root/kubespray/inventory/mycluster/hosts.ini
                   cd /root/kubespray && pip install -r requirements.txt
+
+                  # Begin addons configuration
+                  addons_file=/root/kubespray/inventory/mycluster/group_vars/k8s-cluster/addons.yml
+
+                  # Configure helm deployment
+                  sed -i "s/^helm_enabled: .*$/helm_enabled: true/" $addons_file
+
+                  # Configure local volume provisioner deployment (only useful now to create storageClass)
+                  mkdir -p /mnt/disks
+                  sed -i "s/^local_volume_provisioner_enabled: .*$/local_volume_provisioner_enabled: true/" $addons_file
+
+                  # Configure Deploy ingress
+                  sed -i "s/^ingress_nginx_enabled: .*$/ingress_nginx_enabled: true/" $addons_file
+
+                  # Deploy Kubernetes
                   ansible-playbook -i /root/kubespray/inventory/mycluster/hosts.ini /root/kubespray/cluster.yml
+
+                  # Set default storage class and create static volumes
+                  kubectl patch storageclass local-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+                  for i in `seq 1 50`; do
+                    mkdir -p /mnt/static_disks/pv-${i}
+                    chmod +s /mnt/static_disks/pv-${i}
+                    chmod 777 /mnt/static_disks/pv-${i}
+                    sed "s/\${VOLUME_NAME}/pv-$i/g" /root/pv-template.yaml | kubectl create -f -
+                  done
               - path: /root/hosts.ini
                 content: |
                   [all:vars]
@@ -131,16 +127,16 @@ objects:
                   ansible_kubectl_config=/root/.kube/config
 
                   [all]
-                  debian-kubernetes-6443 	 ansible_host=IP_DEFAULT_GW ip=IP_DEFAULT_GW
+                  ${VM_NAME}-6443 	 ansible_host=IP_DEFAULT_GW ip=IP_DEFAULT_GW
 
                   [kube-master]
-                  debian-kubernetes-6443
+                  ${VM_NAME}-6443
 
                   [etcd]
-                  debian-kubernetes-6443
+                  ${VM_NAME}-6443
 
                   [kube-node]
-                  debian-kubernetes-6443
+                  ${VM_NAME}-6443
 
                   [k8s-cluster:children]
                   kube-master
@@ -149,12 +145,13 @@ objects:
                   [calico-rr]
 
                   [vault]
-                  debian-kubernetes-6443
+                  ${VM_NAME}-6443
               - path: /root/access_data_message.txt
                 content: |
                   Congratulations!
 
-                  You have deployed a new Kubernetes instance.
+                  You have deployed a new __EPHEMERAL__ Kubernetes __EPHEMERAL__
+                  instance.
 
                   Your access key has been attached and console is accesible in
                   /api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
@@ -165,36 +162,44 @@ objects:
 
                   Or going to "Application | Routes" in OpenShift Web Console,
                   clicking in route and adding the endpoint above.
+
+                  Kubectl command line to get pods:
+                  $ kubectl --insecure-skip-tls-verify=true --server=https://api-route --token=**** get pods
+
+                  Get the instance EXTERNAL-IP ip address:
+                  $ oc get services
+
+                  When this instance was destroyed it will be automatically
+                  rebuilt and you will receive an e-mail with your new token.
+
+                  Happy Kuberneting!
+
               - path: /root/kubernetes-dashboard.sh
                 content: |
                   #!/bin/bash
-                  kubectl --kubeconfig='/root/.kube/config' create -f /root/admin-user-service-account.yaml
-                  kubectl --kubeconfig='/root/.kube/config' create -f /root/admin-user-cluster-role-binding.yaml
-                  kubectl --kubeconfig='/root/.kube/config' apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended/kubernetes-dashboard.yaml
                   echo "relayhost = ${MAIL_RELAY}" >> /etc/postfix/main.cf
                   systemctl restart postfix
                   kubectl --kubeconfig='/root/.kube/config' -n kube-system describe secret $(kubectl --kubeconfig='/root/.kube/config' -n kube-system get secret | grep admin-user | awk '{print $1}') > /root/tokens.txt
                   cat /root/access_data_message.txt | mutt -a /root/tokens.txt -s "Your Kubernetes access data" -- ${EMAIL}
-              - path: /root/kubernetes-helm.sh
+              - path: /root/pv-template.yaml
                 content: |
-                  wget https://storage.googleapis.com/kubernetes-helm/helm-v2.12.1-linux-amd64.tar.gz
-                  tar -zxvf helm-v2.12.1-linux-amd64.tar.gz
-                  mv linux-amd64/helm /usr/local/bin
-                  mv linux-amd64/tiller /usr/local/bin
-                  kubectl --kubeconfig='/root/.kube/config' create serviceaccount --namespace kube-system tiller
-                  kubectl --kubeconfig='/root/.kube/config' create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-                  helm init --service-account tiller
-                  sleep 2m
-                  helm repo update
-                  sleep 5s
-              - path: /root/kubernetes-ingress.sh
-                content: |
-                  /usr/local/bin/helm --kubeconfig='/root/.kube/config' install stable/nginx-ingress --name my-nginx --set rbac.create=true --set controller.kind=DaemonSet --set controller.daemonset.useHostPort=true
+                  apiVersion: v1
+                  kind: PersistentVolume
+                  metadata:
+                    name: ${VOLUME_NAME}
+                  spec:
+                    capacity:
+                      storage: 10Gi
+                    volumeMode: Filesystem
+                    accessModes:
+                      - ReadWriteOnce
+                    persistentVolumeReclaimPolicy: Recycle
+                    storageClassName: local-storage
+                    hostPath:
+                      path: "/mnt/static_disks/${VOLUME_NAME}"
               runcmd:
               - bash /root/kubespray-deploy.sh
               - bash /root/kubernetes-dashboard.sh
-              - bash /root/kubernetes-helm.sh
-              - bash /root/kubernetes-ingress.sh
       #  - name: mypvc
       #    persistentVolumeClaim:
       #      claimName: mypvc
@@ -204,7 +209,7 @@ objects:
     name: ${VM_NAME}-22
   spec:
     selector:
-      expose: debian-kubernetes
+      expose: ${VM_NAME}
   #  clusterIP: None
     ports:
     - name: tcp-22 # Actually, no port is needed.
@@ -220,7 +225,7 @@ objects:
     name: ${VM_NAME}-80
   spec:
     selector:
-      expose: debian-kubernetes
+      expose: ${VM_NAME}
     ports:
     - name: http-80 # Actually, no port is needed.
       port: 80
@@ -233,7 +238,7 @@ objects:
     name: ${VM_NAME}-6443
   spec:
     selector:
-      expose: debian-kubernetes
+      expose: ${VM_NAME}
     ports:
     - name: http-6443 # Actually, no port is needed.
       port: 6443
@@ -246,7 +251,7 @@ objects:
     name: ${VM_NAME}-443
   spec:
     selector:
-      expose: debian-kubernetes
+      expose: ${VM_NAME}
     ports:
     - name: http-443 # Actually, no port is needed.
       port: 443
@@ -257,9 +262,9 @@ objects:
   kind: Route
   metadata:
     labels:
-      app: debian-kubernetes
-      template: debian-kubernetes
-    name: debian-kubernetes-6443
+      app: ${VM_NAME}
+      template: ${VM_NAME}
+    name: ${VM_NAME}-6443
   spec:
 #    host: ${KUBERNETES_HOSTNAME}
     port:
@@ -268,16 +273,16 @@ objects:
       termination: passthrough
     to:
       kind: Service
-      name: debian-kubernetes-6443
+      name: ${VM_NAME}-6443
       weight: 100
     wildcardPolicy: None
 - apiVersion: v1
   kind: Route
   metadata:
     labels:
-      app: debian-kubernetes
-      template: debian-kubernetes
-    name: debian-kubernetes-443
+      app: ${VM_NAME}
+      template: ${VM_NAME}
+    name: ${VM_NAME}-443
   spec:
 #    host: ${KUBERNETES_HOSTNAME}
     port:
@@ -286,23 +291,23 @@ objects:
       termination: passthrough
     to:
       kind: Service
-      name: debian-kubernetes-443
+      name: ${VM_NAME}-443
       weight: 100
     wildcardPolicy: None
 - apiVersion: v1
   kind: Route
   metadata:
     labels:
-      app: debian-kubernetes
-      template: debian-kubernetes
-    name: debian-kubernetes-80
+      app: ${VM_NAME}
+      template: ${VM_NAME}
+    name: ${VM_NAME}-80
   spec:
 #    host: ${KUBERNETES_HOSTNAME}
     port:
       targetPort: http-80
     to:
       kind: Service
-      name: debian-kubernetes-80
+      name: ${VM_NAME}-80
       weight: 100
     wildcardPolicy: None
 parameters:
@@ -331,5 +336,3 @@ parameters:
   displayName: Your e-mail address to receive access token
   name: EMAIL
   value: jmferrer@paradigmadigital.com
-#- description: Hostname for the application
-#  displayName: Hostname for the application
